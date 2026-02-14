@@ -1,46 +1,73 @@
 package com.stockcheck.controller;
 
-import com.stockcheck.dto.LowStockAlert;
-import com.stockcheck.dto.StockLevelUpdateRequest;
-import com.stockcheck.model.StockLevel;
-import com.stockcheck.service.StockLevelService;
-import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.*;
+import com.stockcheck.model.*;
+import com.stockcheck.repository.DataStore;
+import com.stockcheck.util.*;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
 
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
-@RestController
-@RequestMapping("/api/stock")
 public class StockLevelController {
 
-    private final StockLevelService stockLevelService;
+    private final DataStore dataStore;
 
-    public StockLevelController(StockLevelService stockLevelService) {
-        this.stockLevelService = stockLevelService;
+    public StockLevelController(DataStore dataStore) {
+        this.dataStore = dataStore;
     }
 
-    @GetMapping
-    public List<StockLevel> getAll() {
-        return stockLevelService.getAllStockLevels();
+    public void register(HttpServer server) {
+        server.createContext("/api/stock", this::handle);
     }
 
-    @GetMapping("/location/{locationId}")
-    public List<StockLevel> getByLocation(@PathVariable Long locationId) {
-        return stockLevelService.getStockByLocation(locationId);
+    private void handle(HttpExchange exchange) throws IOException {
+        try {
+            String method = exchange.getRequestMethod();
+            String path = exchange.getRequestURI().getPath();
+
+            if ("OPTIONS".equals(method)) {
+                HttpHelper.handleCors(exchange);
+                return;
+            }
+
+            if ("GET".equals(method) && path.equals("/api/stock")) {
+                List<Map<String, Object>> list = enrichStockLevels(dataStore.getAllStockLevels());
+                HttpHelper.sendJson(exchange, 200, Json.toJsonArray(list));
+            } else if ("GET".equals(method) && path.startsWith("/api/stock/location/")) {
+                long locationId = Long.parseLong(path.substring("/api/stock/location/".length()));
+                List<Map<String, Object>> list = enrichStockLevels(dataStore.getStockByLocation(locationId));
+                HttpHelper.sendJson(exchange, 200, Json.toJsonArray(list));
+            } else if ("GET".equals(method) && path.startsWith("/api/stock/product/")) {
+                long productId = Long.parseLong(path.substring("/api/stock/product/".length()));
+                List<Map<String, Object>> list = enrichStockLevels(dataStore.getStockByProduct(productId));
+                HttpHelper.sendJson(exchange, 200, Json.toJsonArray(list));
+            } else if ("GET".equals(method) && path.equals("/api/stock/alerts")) {
+                List<Map<String, Object>> alerts = dataStore.getLowStockAlerts();
+                HttpHelper.sendJson(exchange, 200, Json.toJsonArray(alerts));
+            } else if ("PUT".equals(method) && path.equals("/api/stock")) {
+                Map<String, Object> body = Json.parseObject(HttpHelper.readBody(exchange));
+                long productId = Json.getLong(body, "productId");
+                long locationId = Json.getLong(body, "locationId");
+                int quantity = Json.getInt(body, "quantity", 0);
+                StockLevel sl = dataStore.addOrUpdateStockLevel(productId, locationId, quantity);
+                Product product = dataStore.getProduct(sl.getProductId());
+                Location location = dataStore.getLocation(sl.getLocationId());
+                HttpHelper.sendJson(exchange, 200, Json.toJson(sl.toMap(product, location)));
+            } else {
+                HttpHelper.sendError(exchange, 405, "Method not allowed");
+            }
+        } catch (Exception e) {
+            HttpHelper.sendError(exchange, 500, e.getMessage());
+        }
     }
 
-    @GetMapping("/product/{productId}")
-    public List<StockLevel> getByProduct(@PathVariable Long productId) {
-        return stockLevelService.getStockByProduct(productId);
-    }
-
-    @PutMapping
-    public StockLevel updateStock(@Valid @RequestBody StockLevelUpdateRequest request) {
-        return stockLevelService.updateStockLevel(request);
-    }
-
-    @GetMapping("/alerts")
-    public List<LowStockAlert> getLowStockAlerts() {
-        return stockLevelService.getLowStockAlerts();
+    private List<Map<String, Object>> enrichStockLevels(List<StockLevel> levels) {
+        return levels.stream().map(sl -> {
+            Product product = dataStore.getProduct(sl.getProductId());
+            Location location = dataStore.getLocation(sl.getLocationId());
+            return sl.toMap(product, location);
+        }).collect(Collectors.toList());
     }
 }

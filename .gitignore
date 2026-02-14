@@ -1,4 +1,5 @@
-# Java / Maven
+# Java
+backend/out/
 backend/target/
 *.class
 *.jar
