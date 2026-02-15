@@ -7,9 +7,9 @@ COPY . .
 
 # Now, execute all build steps in a single RUN command for efficiency and robustness
 RUN set -e && \
-    # 1. Ensure the lib directory exists and add the H2 driver to it
+    # 1. Ensure the lib directory exists and add the PostgreSQL JDBC driver
     mkdir -p lib && \
-    curl -L -o lib/h2-driver.jar https://repo1.maven.org/maven2/com/h2database/h2/2.2.224/h2-2.2.224.jar && \
+    curl -L -o lib/postgresql.jar https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar && \
     # 2. Make the build script executable
     chmod +x build.sh && \
     # 3. Run the build script to compile the code

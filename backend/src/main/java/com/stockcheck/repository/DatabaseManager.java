@@ -7,9 +7,20 @@ import java.sql.Statement;
 
 public class DatabaseManager {
 
-    private static final String DB_URL = System.getenv("JDBC_DATABASE_URL");
+    private static final String DB_URL = convertDbUrl(System.getenv("JDBC_DATABASE_URL"));
     private static final String DB_USER = System.getenv("JDBC_DATABASE_USER");
     private static final String DB_PASSWORD = System.getenv("JDBC_DATABASE_PASSWORD");
+
+    // Render provides postgres:// URLs but JDBC requires jdbc:postgresql://
+    private static String convertDbUrl(String url) {
+        if (url != null && url.startsWith("postgres://")) {
+            return "jdbc:postgresql://" + url.substring("postgres://".length());
+        }
+        if (url != null && url.startsWith("postgresql://")) {
+            return "jdbc:postgresql://" + url.substring("postgresql://".length());
+        }
+        return url;
+    }
 
     public DatabaseManager() {
         try {

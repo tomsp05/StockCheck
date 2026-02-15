@@ -15,19 +15,23 @@ services:
     plan: free
     # Health Check to ensure the service is responsive before it's considered "healthy"
     healthCheck:
-      path: /
+      path: /api/categories
       port: 8080
       initialDelaySeconds: 30
     # Define the environment variables the backend needs
     envVars:
       - key: JDBC_DATABASE_URL
-        # Render provides a managed PostgreSQL database. For a real app, you would create
-        # one and use its URL here. For now, we continue with the in-memory H2 database.
-        value: jdbc:h2:mem:stockcheckdb;DB_CLOSE_DELAY=-1
+        fromDatabase:
+          name: stockcheck-db
+          property: connectionURI
       - key: JDBC_DATABASE_USER
-        value: sa
+        fromDatabase:
+          name: stockcheck-db
+          property: user
       - key: JDBC_DATABASE_PASSWORD
-        value: ""
+        fromDatabase:
+          name: stockcheck-db
+          property: password
 
   # The React Frontend Service (served with Nginx)
   - type: web
@@ -44,3 +48,7 @@ services:
           name: stockcheck-backend
           type: web
           property: url
+
+databases:
+  - name: stockcheck-db
+    plan: free
