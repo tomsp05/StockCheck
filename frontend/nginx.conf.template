@@ -1,28 +1,21 @@
 server {
-    listen 80; # Nginx listens on port 80 inside the container
+    listen 80;
 
-    # Serve the main React application
+    # Use a public DNS resolver instead of Docker-only 127.0.0.11
+    resolver 8.8.8.8 valid=30s;
+
     location / {
         root   /usr/share/nginx/html;
         index  index.html index.htm;
-        # This is crucial for single-page applications like React to handle routing
         try_files $uri $uri/ /index.html;
     }
 
-    # Proxy API requests to the backend service
-    # Any request to e.g. /api/products will be forwarded to http://backend:8080/api/products
     location /api {
-        # The placeholder $BACKEND_URL will be replaced by the actual backend URL at runtime.
-        proxy_pass $BACKEND_URL;
+        proxy_pass ${BACKEND_URL};
+
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # Standard error page handling
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   /usr/share/nginx/html;
     }
 }

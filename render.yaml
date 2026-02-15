@@ -40,4 +40,7 @@ services:
       # This is the crucial variable for our Nginx template.
       # It points to the internal address Render creates for the backend service.
       - key: BACKEND_URL
-        value: http://stockcheck-backend:8080
+        fromService:
+          name: stockcheck-backend
+          type: web
+          property: url
