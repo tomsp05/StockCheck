@@ -31,10 +31,6 @@ services:
     rootDir: ./frontend
     dockerfilePath: ./frontend/Dockerfile
     plan: free
-    # Add an HTTP rewrite rule for single-page applications like React
-    rules:
-      - source: "/*"
-        destination: "/index.html"
     envVars:
       # This is the crucial variable for our Nginx template.
       # It points to the internal address Render creates for the backend service.
