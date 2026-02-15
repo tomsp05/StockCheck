@@ -3,7 +3,7 @@ WORKDIR /app
 
 # Download the PostgreSQL JDBC driver
 RUN mkdir -p lib && \
-    curl -L -o lib/postgresql.jar https://jdbc.postgresql.org/download/postgresql-42.7.3.jar
+    curl -L -o lib/h2-driver.jar https://repo1.maven.org/maven2/com/h2database/h2/2.2.224/h2-2.2.224.jar
 
 # Copy the entire backend source code into the container
 COPY . .
