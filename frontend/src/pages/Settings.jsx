@@ -82,7 +82,7 @@ export default function Settings() {
           <button type="submit" className="btn"><Save size={16} /> Set Threshold</button>
         </form>
 
-        <table className="data-table">
+        <table className="stock-table">
           <thead>
             <tr>
               <th>Product</th>
@@ -97,8 +97,8 @@ export default function Settings() {
                 <td>{t.product.name}</td>
                 <td>{t.location.name}</td>
                 <td>{t.minQuantity}</td>
-                <td>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(t.id)}><Trash2 size={14} /> Remove</button>
+                <td className="actions-cell">
+                  <button className="btn-danger-outline btn-sm" onClick={() => handleDelete(t.id)}><Trash2 size={14} /></button>
                 </td>
               </tr>
             ))}

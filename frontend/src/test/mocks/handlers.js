@@ -1,6 +1,5 @@
 import { http, HttpResponse } from 'msw';
 
-// Shared mock data - mutable so tests can modify it
 let categories = [
   {
     id: 1, name: 'Toys',
@@ -31,15 +30,15 @@ let locations = [
 ];
 
 let stockLevels = [
-  { id: 1, product: products[0], location: locations[0], quantity: 150, updatedAt: '2025-01-01T00:00:00' },
-  { id: 2, product: products[0], location: locations[1], quantity: 30, updatedAt: '2025-01-01T00:00:00' },
-  { id: 3, product: products[1], location: locations[0], quantity: 75, updatedAt: '2025-01-01T00:00:00' },
-  { id: 4, product: products[1], location: locations[1], quantity: 5, updatedAt: '2025-01-01T00:00:00' },
+  { id: 1, productId: 1, locationId: 1, quantity: 150, updatedAt: '2025-01-01T00:00:00' },
+  { id: 2, productId: 1, locationId: 2, quantity: 30, updatedAt: '2025-01-01T00:00:00' },
+  { id: 3, productId: 2, locationId: 1, quantity: 75, updatedAt: '2025-01-01T00:00:00' },
+  { id: 4, productId: 2, locationId: 2, quantity: 5, updatedAt: '2025-01-01T00:00:00' },
 ];
 
 let thresholds = [
-  { id: 1, product: products[0], location: locations[0], productId: 1, locationId: 1, minQuantity: 20 },
-  { id: 2, product: products[1], location: locations[1], productId: 2, locationId: 2, minQuantity: 10 },
+  { id: 1, product: { id: 1, name: 'Widget A' }, location: { id: 1, name: 'Main Warehouse' }, productId: 1, locationId: 1, minQuantity: 20 },
+  { id: 2, product: { id: 2, name: 'Gadget B' }, location: { id: 2, name: 'High Street Store' }, productId: 2, locationId: 2, minQuantity: 10 },
 ];
 
 let alerts = [
@@ -77,6 +76,19 @@ export function resetMockData() {
     { id: 1, name: 'Main Warehouse', address: '1 Industrial Park, London', createdAt: '2025-01-01T00:00:00', updatedAt: '2025-01-01T00:00:00' },
     { id: 2, name: 'High Street Store', address: '42 High Street, London', createdAt: '2025-01-01T00:00:00', updatedAt: '2025-01-01T00:00:00' },
   ];
+  stockLevels = [
+    { id: 1, productId: 1, locationId: 1, quantity: 150, updatedAt: '2025-01-01T00:00:00' },
+    { id: 2, productId: 1, locationId: 2, quantity: 30, updatedAt: '2025-01-01T00:00:00' },
+    { id: 3, productId: 2, locationId: 1, quantity: 75, updatedAt: '2025-01-01T00:00:00' },
+    { id: 4, productId: 2, locationId: 2, quantity: 5, updatedAt: '2025-01-01T00:00:00' },
+  ];
+  thresholds = [
+    { id: 1, product: { id: 1, name: 'Widget A' }, location: { id: 1, name: 'Main Warehouse' }, productId: 1, locationId: 1, minQuantity: 20 },
+    { id: 2, product: { id: 2, name: 'Gadget B' }, location: { id: 2, name: 'High Street Store' }, productId: 2, locationId: 2, minQuantity: 10 },
+  ];
+  alerts = [
+    { productId: 2, productName: 'Gadget B', sku: 'GDG-002', locationId: 2, locationName: 'High Street Store', currentQuantity: 5, threshold: 10 },
+  ];
   nextProductId = 3;
   nextLocationId = 3;
   nextCategoryId = 3;
@@ -84,23 +96,17 @@ export function resetMockData() {
 
 export const handlers = [
   // Categories
-  http.get('/api/categories', () => {
-    return HttpResponse.json(categories);
-  }),
-
+  http.get('/api/categories', () => HttpResponse.json(categories)),
   http.get('/api/categories/:id', ({ params }) => {
-    const category = categories.find((c) => c.id === Number(params.id));
-    if (!category) return HttpResponse.json({ error: 'Not found' }, { status: 404 });
-    return HttpResponse.json(category);
+    const cat = categories.find((c) => c.id === Number(params.id));
+    return cat ? HttpResponse.json(cat) : HttpResponse.json({ error: 'Not found' }, { status: 404 });
   }),
-
   http.post('/api/categories', async ({ request }) => {
     const body = await request.json();
-    const category = { id: nextCategoryId++, ...body, createdAt: '2025-01-01T00:00:00', updatedAt: '2025-01-01T00:00:00' };
-    categories.push(category);
-    return HttpResponse.json(category, { status: 201 });
+    const cat = { id: nextCategoryId++, ...body, createdAt: '2025-01-01T00:00:00', updatedAt: '2025-01-01T00:00:00' };
+    categories.push(cat);
+    return HttpResponse.json(cat, { status: 201 });
   }),
-
   http.put('/api/categories/:id', async ({ params, request }) => {
     const body = await request.json();
     const idx = categories.findIndex((c) => c.id === Number(params.id));
@@ -108,30 +114,23 @@ export const handlers = [
     categories[idx] = { ...categories[idx], ...body };
     return HttpResponse.json(categories[idx]);
   }),
-
   http.delete('/api/categories/:id', ({ params }) => {
     categories = categories.filter((c) => c.id !== Number(params.id));
     return new HttpResponse(null, { status: 204 });
   }),
 
   // Products
-  http.get('/api/products', () => {
-    return HttpResponse.json(products);
-  }),
-
+  http.get('/api/products', () => HttpResponse.json(products)),
   http.get('/api/products/:id', ({ params }) => {
-    const product = products.find((p) => p.id === Number(params.id));
-    if (!product) return HttpResponse.json({ error: 'Not found' }, { status: 404 });
-    return HttpResponse.json(product);
+    const p = products.find((p) => p.id === Number(params.id));
+    return p ? HttpResponse.json(p) : HttpResponse.json({ error: 'Not found' }, { status: 404 });
   }),
-
   http.post('/api/products', async ({ request }) => {
     const body = await request.json();
-    const product = { id: nextProductId++, ...body, createdAt: '2025-01-01T00:00:00', updatedAt: '2025-01-01T00:00:00' };
-    products.push(product);
-    return HttpResponse.json(product, { status: 201 });
+    const p = { id: nextProductId++, ...body, createdAt: '2025-01-01T00:00:00', updatedAt: '2025-01-01T00:00:00' };
+    products.push(p);
+    return HttpResponse.json(p, { status: 201 });
   }),
-
   http.put('/api/products/:id', async ({ params, request }) => {
     const body = await request.json();
     const idx = products.findIndex((p) => p.id === Number(params.id));
@@ -139,30 +138,23 @@ export const handlers = [
     products[idx] = { ...products[idx], ...body };
     return HttpResponse.json(products[idx]);
   }),
-
   http.delete('/api/products/:id', ({ params }) => {
     products = products.filter((p) => p.id !== Number(params.id));
     return new HttpResponse(null, { status: 204 });
   }),
 
   // Locations
-  http.get('/api/locations', () => {
-    return HttpResponse.json(locations);
-  }),
-
+  http.get('/api/locations', () => HttpResponse.json(locations)),
   http.get('/api/locations/:id', ({ params }) => {
-    const location = locations.find((l) => l.id === Number(params.id));
-    if (!location) return HttpResponse.json({ error: 'Not found' }, { status: 404 });
-    return HttpResponse.json(location);
+    const l = locations.find((l) => l.id === Number(params.id));
+    return l ? HttpResponse.json(l) : HttpResponse.json({ error: 'Not found' }, { status: 404 });
   }),
-
   http.post('/api/locations', async ({ request }) => {
     const body = await request.json();
-    const location = { id: nextLocationId++, ...body, createdAt: '2025-01-01T00:00:00', updatedAt: '2025-01-01T00:00:00' };
-    locations.push(location);
-    return HttpResponse.json(location, { status: 201 });
+    const l = { id: nextLocationId++, ...body, createdAt: '2025-01-01T00:00:00', updatedAt: '2025-01-01T00:00:00' };
+    locations.push(l);
+    return HttpResponse.json(l, { status: 201 });
   }),
-
   http.put('/api/locations/:id', async ({ params, request }) => {
     const body = await request.json();
     const idx = locations.findIndex((l) => l.id === Number(params.id));
@@ -170,32 +162,22 @@ export const handlers = [
     locations[idx] = { ...locations[idx], ...body };
     return HttpResponse.json(locations[idx]);
   }),
-
   http.delete('/api/locations/:id', ({ params }) => {
     locations = locations.filter((l) => l.id !== Number(params.id));
     return new HttpResponse(null, { status: 204 });
   }),
 
   // Stock Levels
-  http.get('/api/stock', () => {
-    return HttpResponse.json(stockLevels);
-  }),
-
+  http.get('/api/stock', () => HttpResponse.json(stockLevels)),
   http.get('/api/stock/location/:id', ({ params }) => {
-    const filtered = stockLevels.filter((s) => s.location.id === Number(params.id));
-    return HttpResponse.json(filtered);
+    return HttpResponse.json(stockLevels.filter((s) => s.locationId === Number(params.id)));
   }),
-
   http.get('/api/stock/product/:id', ({ params }) => {
-    const filtered = stockLevels.filter((s) => s.product.id === Number(params.id));
-    return HttpResponse.json(filtered);
+    return HttpResponse.json(stockLevels.filter((s) => s.productId === Number(params.id)));
   }),
-
   http.put('/api/stock', async ({ request }) => {
     const body = await request.json();
-    const idx = stockLevels.findIndex(
-      (s) => s.product.id === body.productId && s.location.id === body.locationId,
-    );
+    const idx = stockLevels.findIndex((s) => s.productId === body.productId && s.locationId === body.locationId);
     if (idx !== -1) {
       stockLevels[idx] = { ...stockLevels[idx], quantity: body.quantity };
       return HttpResponse.json(stockLevels[idx]);
@@ -204,22 +186,16 @@ export const handlers = [
   }),
 
   // Alerts
-  http.get('/api/stock/alerts', () => {
-    return HttpResponse.json(alerts);
-  }),
+  http.get('/api/stock/alerts', () => HttpResponse.json(alerts)),
 
   // Thresholds
-  http.get('/api/thresholds', () => {
-    return HttpResponse.json(thresholds);
-  }),
-
+  http.get('/api/thresholds', () => HttpResponse.json(thresholds)),
   http.put('/api/thresholds', async ({ request }) => {
     const body = await request.json();
-    const threshold = { id: 3, ...body, product: products[0], location: locations[0] };
-    thresholds.push(threshold);
-    return HttpResponse.json(threshold);
+    const t = { id: 3, ...body, product: products[0], location: locations[0] };
+    thresholds.push(t);
+    return HttpResponse.json(t);
   }),
-
   http.delete('/api/thresholds/:id', ({ params }) => {
     thresholds = thresholds.filter((t) => t.id !== Number(params.id));
     return new HttpResponse(null, { status: 204 });
