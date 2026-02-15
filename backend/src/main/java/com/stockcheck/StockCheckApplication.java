@@ -15,8 +15,23 @@ public class StockCheckApplication {
             port = Integer.parseInt(args[0]);
         }
 
-        DatabaseManager dbManager = new DatabaseManager(); // Instantiated DatabaseManager
-        dbManager.initializeSchema(); // Initialized schema
+        DatabaseManager dbManager = new DatabaseManager();
+
+        // Retry connecting to the database (allows time for Docker PostgreSQL to start)
+        int maxRetries = 10;
+        for (int i = 1; i <= maxRetries; i++) {
+            try {
+                dbManager.initializeSchema();
+                break;
+            } catch (Exception e) {
+                if (i == maxRetries) {
+                    System.err.println("Failed to connect to database after " + maxRetries + " attempts.");
+                    throw e;
+                }
+                System.out.println("Database not ready, retrying in 2s... (" + i + "/" + maxRetries + ")");
+                Thread.sleep(2000);
+            }
+        }
 
         DataStore dataStore = new DataStore();
         dataStore.loadOrInitialize();

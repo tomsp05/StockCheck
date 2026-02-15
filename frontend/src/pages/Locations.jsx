@@ -9,18 +9,25 @@ export default function Locations() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', address: '' });
   const [editingId, setEditingId] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      await locationApi.update(editingId, form);
-    } else {
-      await locationApi.create(form);
+    setError(null);
+    try {
+      if (editingId) {
+        await locationApi.update(editingId, form);
+      } else {
+        await locationApi.create(form);
+      }
+      setForm({ name: '', address: '' });
+      setEditingId(null);
+      setShowForm(false);
+      mutate();
+    } catch (err) {
+      console.error('Failed to save location', err);
+      setError(err.response?.data?.error || err.message || 'Failed to save location');
     }
-    setForm({ name: '', address: '' });
-    setEditingId(null);
-    setShowForm(false);
-    mutate();
   };
 
   const handleEdit = (location) => {
@@ -46,6 +53,8 @@ export default function Locations() {
           {showForm ? <><X size={16} /> Cancel</> : <><Plus size={16} /> Add Location</>}
         </button>
       </div>
+
+      {error && <div className="error-banner">{error}</div>}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="form-card">

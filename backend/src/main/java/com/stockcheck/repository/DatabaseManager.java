@@ -92,6 +92,7 @@ public class DatabaseManager {
         } catch (SQLException e) {
             System.err.println("Error initializing database schema: " + e.getMessage());
             e.printStackTrace();
+            throw new RuntimeException("Failed to initialize database schema", e);
         }
     }
 }

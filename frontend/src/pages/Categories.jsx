@@ -10,26 +10,33 @@ export default function Categories() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', attributes: [emptyAttribute()] });
   const [editingId, setEditingId] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = {
-      name: form.name,
-      attributes: form.attributes.map((a) => ({
-        name: a.name,
-        type: a.type,
-        options: a.type === 'dropdown' ? a.options.split(',').map((o) => o.trim()).filter(Boolean) : null,
-      })),
-    };
-    if (editingId) {
-      await categoryApi.update(editingId, payload);
-    } else {
-      await categoryApi.create(payload);
+    setError(null);
+    try {
+      const payload = {
+        name: form.name,
+        attributes: form.attributes.map((a) => ({
+          name: a.name,
+          type: a.type,
+          options: a.type === 'dropdown' ? a.options.split(',').map((o) => o.trim()).filter(Boolean) : null,
+        })),
+      };
+      if (editingId) {
+        await categoryApi.update(editingId, payload);
+      } else {
+        await categoryApi.create(payload);
+      }
+      setForm({ name: '', attributes: [emptyAttribute()] });
+      setEditingId(null);
+      setShowForm(false);
+      mutate();
+    } catch (err) {
+      console.error('Failed to save category', err);
+      setError(err.response?.data?.error || err.message || 'Failed to save category');
     }
-    setForm({ name: '', attributes: [emptyAttribute()] });
-    setEditingId(null);
-    setShowForm(false);
-    mutate();
   };
 
   const handleEdit = (cat) => {
@@ -76,6 +83,8 @@ export default function Categories() {
           {showForm ? <><X size={16} /> Cancel</> : <><Plus size={16} /> Add Category</>}
         </button>
       </div>
+
+      {error && <div className="error-banner">{error}</div>}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="form-card">
