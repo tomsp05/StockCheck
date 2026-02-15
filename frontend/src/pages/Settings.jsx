@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Save, Trash2 } from 'lucide-react';
 import { thresholdApi, productApi, locationApi } from '../api/client';
 
 export default function Settings() {
@@ -57,8 +58,8 @@ export default function Settings() {
 
         <form onSubmit={handleSubmit} className="form-card form-inline">
           <div className="form-group">
-            <label>Product</label>
-            <select required value={form.productId} onChange={(e) => setForm({ ...form, productId: e.target.value })}>
+            <label htmlFor="threshold-product">Product</label>
+            <select id="threshold-product" required value={form.productId} onChange={(e) => setForm({ ...form, productId: e.target.value })}>
               <option value="">Select product</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
@@ -66,8 +67,8 @@ export default function Settings() {
             </select>
           </div>
           <div className="form-group">
-            <label>Location</label>
-            <select required value={form.locationId} onChange={(e) => setForm({ ...form, locationId: e.target.value })}>
+            <label htmlFor="threshold-location">Location</label>
+            <select id="threshold-location" required value={form.locationId} onChange={(e) => setForm({ ...form, locationId: e.target.value })}>
               <option value="">Select location</option>
               {locations.map((l) => (
                 <option key={l.id} value={l.id}>{l.name}</option>
@@ -75,10 +76,10 @@ export default function Settings() {
             </select>
           </div>
           <div className="form-group">
-            <label>Min Quantity</label>
-            <input type="number" min="0" required value={form.minQuantity} onChange={(e) => setForm({ ...form, minQuantity: e.target.value })} />
+            <label htmlFor="threshold-min-qty">Min Quantity</label>
+            <input id="threshold-min-qty" type="number" min="0" required value={form.minQuantity} onChange={(e) => setForm({ ...form, minQuantity: e.target.value })} />
           </div>
-          <button type="submit" className="btn">Set Threshold</button>
+          <button type="submit" className="btn"><Save size={16} /> Set Threshold</button>
         </form>
 
         <table className="data-table">
@@ -97,7 +98,7 @@ export default function Settings() {
                 <td>{t.location.name}</td>
                 <td>{t.minQuantity}</td>
                 <td>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(t.id)}>Remove</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(t.id)}><Trash2 size={14} /> Remove</button>
                 </td>
               </tr>
             ))}

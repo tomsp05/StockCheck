@@ -20,6 +20,7 @@ public class StockCheckApplication {
 
         new LocationController(dataStore).register(server);
         new ProductController(dataStore).register(server);
+        new CategoryController(dataStore).register(server);
         new StockLevelController(dataStore).register(server);
         new AlertThresholdController(dataStore).register(server);
         new ExportController(dataStore).register(server);

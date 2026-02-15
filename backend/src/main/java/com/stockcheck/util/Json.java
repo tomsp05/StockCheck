@@ -44,9 +44,14 @@ public class Json {
             return toJson(m);
         }
         if (val instanceof List) {
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> l = (List<Map<String, Object>>) val;
-            return toJsonArray(l);
+            List<?> l = (List<?>) val;
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0; i < l.size(); i++) {
+                if (i > 0) sb.append(",");
+                sb.append(valueToJson(l.get(i)));
+            }
+            sb.append("]");
+            return sb.toString();
         }
         return "\"" + escape(val.toString()) + "\"";
     }
