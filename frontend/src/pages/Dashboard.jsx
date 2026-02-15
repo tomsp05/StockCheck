@@ -1,34 +1,31 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Blocks, MapPin, Package, AlertTriangle, ArrowRight } from 'lucide-react';
-import { stockApi, locationApi, productApi } from '../api/client';
+import { useEffect, useState, useMemo } from 'react';
+import { Plus, Box, Trash2, ArrowRightLeft } from 'lucide-react';
+import { productApi, categoryApi, locationApi, stockApi } from '../api/client';
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({ products: 0, locations: 0, alerts: 0, totalStock: 0 });
-  const [alerts, setAlerts] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [stockLevels, setStockLevels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('All Items');
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [productsRes, locationsRes, stockRes, alertsRes] = await Promise.all([
+        setLoading(true);
+        const [prodRes, catRes, locRes, stockRes] = await Promise.all([
           productApi.getAll(),
+          categoryApi.getAll(),
           locationApi.getAll(),
           stockApi.getAll(),
-          stockApi.getAlerts(),
         ]);
-
-        const totalStock = stockRes.data.reduce((sum, sl) => sum + sl.quantity, 0);
-
-        setStats({
-          products: productsRes.data.length,
-          locations: locationsRes.data.length,
-          alerts: alertsRes.data.length,
-          totalStock,
-        });
-        setAlerts(alertsRes.data);
+        setProducts(prodRes.data);
+        setCategories(catRes.data);
+        setLocations(locRes.data);
+        setStockLevels(stockRes.data);
       } catch (err) {
-        console.error('Failed to load dashboard data', err);
+        console.error('Failed to load data', err);
       } finally {
         setLoading(false);
       }
@@ -36,86 +33,125 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
-  if (loading) return <p>Loading...</p>;
+  const locationStockTotals = useMemo(() => {
+    return locations.map(location => {
+      const total = stockLevels
+        .filter(sl => sl.locationId === location.id)
+        .reduce((sum, sl) => sum + sl.quantity, 0);
+      return { ...location, total };
+    });
+  }, [locations, stockLevels]);
+
+  const pivotData = useMemo(() => {
+    const productMap = products.reduce((acc, p) => {
+      acc[p.id] = {
+        product: p,
+        category: categories.find(c => c.id === p.categoryId)?.name || 'Uncategorized',
+        locations: {},
+        total: 0,
+      };
+      return acc;
+    }, {});
+
+    stockLevels.forEach(sl => {
+      if (productMap[sl.productId]) {
+        productMap[sl.productId].locations[sl.locationId] = sl.quantity;
+        productMap[sl.productId].total += sl.quantity;
+      }
+    });
+
+    return Object.values(productMap);
+  }, [products, stockLevels, categories]);
+
+  const filteredPivotData = useMemo(() => {
+    if (activeCategory === 'All Items') {
+      return pivotData;
+    }
+    return pivotData.filter(p => p.category === activeCategory);
+  }, [pivotData, activeCategory]);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <div className="page">
-      <h1>Dashboard</h1>
+      <div className="page-header">
+        <div>
+          <h1>Childcare Stock Manager</h1>
+          <p>Track and distribute toys and activities across your sites</p>
+        </div>
+        <button className="btn">
+          <Plus size={16} /> Add Item
+        </button>
+      </div>
+
       <div className="stats-grid">
-        <div className="stat-card stat-card--indigo">
-          <div className="stat-icon stat-icon--indigo">
-            <Blocks size={22} />
+        {locationStockTotals.map(loc => (
+          <div key={loc.id} className="stat-card">
+            <div className="stat-card-header">
+              <h2>{loc.name}</h2>
+              <Box size={16} />
+            </div>
+            <div>
+              <p className="stat-value">{loc.total}</p>
+              <p className="stat-label">Total items in stock</p>
+            </div>
           </div>
-          <div>
-            <h3>Products</h3>
-            <p className="stat-value">{stats.products}</p>
-          </div>
-        </div>
-        <div className="stat-card stat-card--amber">
-          <div className="stat-icon stat-icon--amber">
-            <MapPin size={22} />
-          </div>
-          <div>
-            <h3>Locations</h3>
-            <p className="stat-value">{stats.locations}</p>
-          </div>
-        </div>
-        <div className="stat-card stat-card--emerald">
-          <div className="stat-icon stat-icon--emerald">
-            <Package size={22} />
-          </div>
-          <div>
-            <h3>Total Stock</h3>
-            <p className="stat-value">{stats.totalStock}</p>
-          </div>
-        </div>
-        <div className="stat-card alert-card stat-card--rose">
-          <div className="stat-icon stat-icon--rose">
-            <AlertTriangle size={22} />
-          </div>
-          <div>
-            <h3>Low Stock Alerts</h3>
-            <p className="stat-value">{stats.alerts}</p>
-          </div>
+        ))}
+      </div>
+
+      <div>
+        <div className="filter-pills">
+          <button
+            onClick={() => setActiveCategory('All Items')}
+            className={activeCategory === 'All Items' ? 'active' : ''}
+          >
+            All Items
+          </button>
+          {categories.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.name)}
+              className={activeCategory === cat.name ? 'active' : ''}
+            >
+              {cat.name}
+            </button>
+          ))}
         </div>
       </div>
 
-      {alerts.length > 0 && (
-        <div className="section">
-          <h2>Low Stock Alerts</h2>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>SKU</th>
-                <th>Location</th>
-                <th>Current Qty</th>
-                <th>Threshold</th>
-              </tr>
-            </thead>
-            <tbody>
-              {alerts.map((alert, i) => (
-                <tr key={i} className="alert-row">
-                  <td>{alert.productName}</td>
-                  <td>{alert.sku}</td>
-                  <td>{alert.locationName}</td>
-                  <td>{alert.currentQuantity}</td>
-                  <td>{alert.threshold}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div className="section">
-        <h2>Quick Actions</h2>
-        <div className="actions">
-          <Link to="/stock" className="btn"><ArrowRight size={16} /> View Stock Levels</Link>
-          <Link to="/products" className="btn"><ArrowRight size={16} /> Manage Products</Link>
-          <Link to="/locations" className="btn"><ArrowRight size={16} /> Manage Locations</Link>
-        </div>
-      </div>
+      <table className="stock-table">
+        <thead>
+          <tr>
+            <th>Item Name</th>
+            <th>Category</th>
+            {locations.map(loc => <th key={loc.id}>{loc.name}</th>)}
+            <th>Total</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredPivotData.map(({ product, category, locations: itemLocations, total }) => (
+            <tr key={product.id}>
+              <td>{product.name}</td>
+              <td><span className="category-pill">{category}</span></td>
+              {locations.map(loc => <td key={loc.id}>{itemLocations[loc.id] || 0}</td>)}
+              <td>{total}</td>
+              <td className="actions-cell">
+                <div className="btn-group">
+                  <button className="btn-outline btn-sm">
+                    <ArrowRightLeft size={14} /> Transfer
+                  </button>
+                  <button className="btn-danger-outline btn-sm">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

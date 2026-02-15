@@ -75,7 +75,7 @@ export default function Products() {
 
   const getCategoryName = (categoryId) => {
     const cat = categories.find((c) => c.id === categoryId);
-    return cat ? cat.name : '-';
+    return cat ? cat.name : null;
   };
 
   if (loading) return <p>Loading...</p>;
@@ -142,7 +142,7 @@ export default function Products() {
         </form>
       )}
 
-      <table className="data-table">
+      <table className="stock-table">
         <thead>
           <tr>
             <th>Name</th>
@@ -157,11 +157,17 @@ export default function Products() {
             <tr key={p.id}>
               <td>{p.name}</td>
               <td>{p.sku}</td>
-              <td>{getCategoryName(p.categoryId)}</td>
-              <td>{p.description || '-'}</td>
               <td>
-                <button className="btn btn-sm" onClick={() => handleEdit(p)}><Pencil size={14} /> Edit</button>
-                <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}><Trash2 size={14} /> Delete</button>
+                {getCategoryName(p.categoryId)
+                  ? <span className="category-pill">{getCategoryName(p.categoryId)}</span>
+                  : '-'}
+              </td>
+              <td>{p.description || '-'}</td>
+              <td className="actions-cell">
+                <div className="btn-group">
+                  <button className="btn-outline btn-sm" onClick={() => handleEdit(p)}><Pencil size={14} /> Edit</button>
+                  <button className="btn-danger-outline btn-sm" onClick={() => handleDelete(p.id)}><Trash2 size={14} /></button>
+                </div>
               </td>
             </tr>
           ))}

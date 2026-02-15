@@ -125,12 +125,12 @@ export default function Categories() {
                     onChange={(e) => updateAttribute(i, 'options', e.target.value)}
                   />
                 )}
-                <button type="button" className="btn btn-sm btn-danger" onClick={() => removeAttribute(i)}>
+                <button type="button" className="btn-danger-outline btn-sm" onClick={() => removeAttribute(i)}>
                   <Trash2 size={14} />
                 </button>
               </div>
             ))}
-            <button type="button" className="btn btn-sm" onClick={addAttribute}>
+            <button type="button" className="btn-outline btn-sm" onClick={addAttribute}>
               <Plus size={14} /> Add Attribute
             </button>
           </div>
@@ -139,7 +139,7 @@ export default function Categories() {
         </form>
       )}
 
-      <table className="data-table">
+      <table className="stock-table">
         <thead>
           <tr>
             <th>Name</th>
@@ -152,9 +152,11 @@ export default function Categories() {
             <tr key={cat.id}>
               <td>{cat.name}</td>
               <td>{cat.attributes ? cat.attributes.map((a) => a.name).join(', ') : '-'}</td>
-              <td>
-                <button className="btn btn-sm" onClick={() => handleEdit(cat)}><Pencil size={14} /> Edit</button>
-                <button className="btn btn-sm btn-danger" onClick={() => handleDelete(cat.id)}><Trash2 size={14} /> Delete</button>
+              <td className="actions-cell">
+                <div className="btn-group">
+                  <button className="btn-outline btn-sm" onClick={() => handleEdit(cat)}><Pencil size={14} /> Edit</button>
+                  <button className="btn-danger-outline btn-sm" onClick={() => handleDelete(cat.id)}><Trash2 size={14} /></button>
+                </div>
               </td>
             </tr>
           ))}

@@ -1,57 +1,66 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, it, expect } from 'vitest';
 import Dashboard from '../Dashboard';
 
 function renderDashboard() {
-  return render(
-    <MemoryRouter>
-      <Dashboard />
-    </MemoryRouter>,
-  );
+  const router = createMemoryRouter([{ path: '/', element: <Dashboard /> }]);
+  return render(<RouterProvider router={router} />);
 }
 
 describe('Dashboard page', () => {
-  it('shows loading state initially', () => {
+  it('renders heading and stat cards after loading', async () => {
     renderDashboard();
     expect(screen.getByText('Loading...')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('Childcare Stock Manager')).toBeInTheDocument();
+    });
+
+    const statCards = document.querySelectorAll('.stat-card');
+    expect(statCards.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('displays stats cards after loading', async () => {
+  it('displays stock totals per location', async () => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      expect(screen.getByText('Childcare Stock Manager')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Products')).toBeInTheDocument();
-    expect(screen.getByText('Locations')).toBeInTheDocument();
-    expect(screen.getByText('Total Stock')).toBeInTheDocument();
-    // "Low Stock Alerts" appears both as h3 stat card and h2 section header
-    expect(screen.getAllByText('Low Stock Alerts').length).toBeGreaterThanOrEqual(1);
+    // Main Warehouse: 150 + 75 = 225, High Street Store: 30 + 5 = 35
+    expect(screen.getByText('225')).toBeInTheDocument();
+    expect(screen.getByText('35')).toBeInTheDocument();
   });
 
-  it('displays low stock alerts table', async () => {
+  it('displays category filter pills', async () => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByText('Gadget B')).toBeInTheDocument();
+      expect(screen.getByText('Childcare Stock Manager')).toBeInTheDocument();
     });
-    expect(screen.getByText('GDG-002')).toBeInTheDocument();
-    expect(screen.getByText('High Street Store')).toBeInTheDocument();
+
+    const pillContainer = document.querySelector('.filter-pills');
+    expect(within(pillContainer).getByText('All Items')).toBeInTheDocument();
+    expect(within(pillContainer).getByText('Toys')).toBeInTheDocument();
+    expect(within(pillContainer).getByText('Art Supplies')).toBeInTheDocument();
   });
 
-  it('renders quick action links', async () => {
+  it('filters products by category', async () => {
+    const user = userEvent.setup();
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByText('View Stock Levels')).toBeInTheDocument();
+      expect(screen.getByText('Widget A')).toBeInTheDocument();
     });
-    expect(screen.getByText('Manage Products')).toBeInTheDocument();
-    expect(screen.getByText('Manage Locations')).toBeInTheDocument();
 
-    expect(screen.getByText('View Stock Levels').closest('a')).toHaveAttribute('href', '/stock');
-    expect(screen.getByText('Manage Products').closest('a')).toHaveAttribute('href', '/products');
-    expect(screen.getByText('Manage Locations').closest('a')).toHaveAttribute('href', '/locations');
+    expect(screen.getByText('Gadget B')).toBeInTheDocument();
+
+    const pillContainer = document.querySelector('.filter-pills');
+    await user.click(within(pillContainer).getByText('Toys'));
+
+    expect(screen.getByText('Widget A')).toBeInTheDocument();
+    expect(screen.queryByText('Gadget B')).not.toBeInTheDocument();
   });
 });

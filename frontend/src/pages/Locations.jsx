@@ -73,7 +73,7 @@ export default function Locations() {
         </form>
       )}
 
-      <table className="data-table">
+      <table className="stock-table">
         <thead>
           <tr>
             <th>Name</th>
@@ -86,9 +86,11 @@ export default function Locations() {
             <tr key={loc.id}>
               <td>{loc.name}</td>
               <td>{loc.address || '-'}</td>
-              <td>
-                <button className="btn btn-sm" onClick={() => handleEdit(loc)}><Pencil size={14} /> Edit</button>
-                <button className="btn btn-sm btn-danger" onClick={() => handleDelete(loc.id)}><Trash2 size={14} /> Delete</button>
+              <td className="actions-cell">
+                <div className="btn-group">
+                  <button className="btn-outline btn-sm" onClick={() => handleEdit(loc)}><Pencil size={14} /> Edit</button>
+                  <button className="btn-danger-outline btn-sm" onClick={() => handleDelete(loc.id)}><Trash2 size={14} /></button>
+                </div>
               </td>
             </tr>
           ))}

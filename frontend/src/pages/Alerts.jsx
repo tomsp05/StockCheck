@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { stockApi } from '../api/client';
 
 export default function Alerts() {
@@ -25,7 +25,7 @@ export default function Alerts() {
           <p>No low stock alerts. All items are above their thresholds.</p>
         </div>
       ) : (
-        <table className="data-table">
+        <table className="stock-table">
           <thead>
             <tr>
               <th>Product</th>
@@ -38,7 +38,7 @@ export default function Alerts() {
           </thead>
           <tbody>
             {alerts.map((alert, i) => (
-              <tr key={i} className="alert-row">
+              <tr key={i}>
                 <td>{alert.productName}</td>
                 <td>{alert.sku}</td>
                 <td>{alert.locationName}</td>

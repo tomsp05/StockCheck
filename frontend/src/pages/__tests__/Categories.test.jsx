@@ -1,15 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
 import Categories from '../Categories';
 
 function renderCategories() {
-  return render(
-    <MemoryRouter>
-      <Categories />
-    </MemoryRouter>,
-  );
+  const router = createMemoryRouter([{ path: '/', element: <Categories /> }]);
+  return render(<RouterProvider router={router} />);
 }
 
 describe('Categories page', () => {
@@ -49,7 +46,6 @@ describe('Categories page', () => {
     await user.click(screen.getByText('Add Category'));
     await user.type(screen.getByLabelText('Name'), 'Electronics');
     await user.type(screen.getByLabelText('Attribute 1 name'), 'Voltage');
-
     await user.click(screen.getByText('Create'));
 
     await waitFor(() => {
@@ -57,7 +53,7 @@ describe('Categories page', () => {
     });
   });
 
-  it('adds and removes attribute rows', async () => {
+  it('adds attribute rows', async () => {
     const user = userEvent.setup();
     renderCategories();
 
@@ -70,14 +66,6 @@ describe('Categories page', () => {
 
     await user.click(screen.getByText('Add Attribute'));
     expect(screen.getByLabelText('Attribute 2 name')).toBeInTheDocument();
-
-    // Remove first attribute
-    const removeButtons = screen.getAllByRole('button', { name: '' });
-    // The trash buttons for attributes - click the first one
-    const trashButtons = screen.getAllByRole('button').filter((btn) => btn.closest('.btn-danger') && btn.closest('.form-card'));
-    if (trashButtons.length > 0) {
-      await user.click(trashButtons[0]);
-    }
   });
 
   it('shows dropdown options input when type is dropdown', async () => {
@@ -104,8 +92,7 @@ describe('Categories page', () => {
     const editButtons = screen.getAllByText('Edit');
     await user.click(editButtons[0]);
 
-    const nameInput = screen.getByLabelText('Name');
-    expect(nameInput).toHaveValue('Toys');
+    expect(screen.getByLabelText('Name')).toHaveValue('Toys');
     expect(screen.getByText('Update')).toBeInTheDocument();
   });
 
@@ -118,7 +105,9 @@ describe('Categories page', () => {
       expect(screen.getByText('Toys')).toBeInTheDocument();
     });
 
-    const deleteButtons = screen.getAllByText('Delete');
+    const deleteButtons = screen.getAllByRole('button').filter(btn =>
+      btn.classList.contains('btn-danger-outline')
+    );
     await user.click(deleteButtons[0]);
 
     expect(window.confirm).toHaveBeenCalledWith('Delete this category?');
