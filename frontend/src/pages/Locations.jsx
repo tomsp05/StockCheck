@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Plus, X, Pencil, Trash2 } from 'lucide-react';
 import { locationApi } from '../api/client';
 
 export default function Locations() {
@@ -54,19 +55,19 @@ export default function Locations() {
       <div className="page-header">
         <h1>Locations</h1>
         <button className="btn" onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: '', address: '' }); }}>
-          {showForm ? 'Cancel' : 'Add Location'}
+          {showForm ? <><X size={16} /> Cancel</> : <><Plus size={16} /> Add Location</>}
         </button>
       </div>
 
       {showForm && (
         <form onSubmit={handleSubmit} className="form-card">
           <div className="form-group">
-            <label>Name</label>
-            <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <label htmlFor="location-name">Name</label>
+            <input id="location-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className="form-group">
-            <label>Address</label>
-            <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+            <label htmlFor="location-address">Address</label>
+            <input id="location-address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
           </div>
           <button type="submit" className="btn">{editingId ? 'Update' : 'Create'}</button>
         </form>
@@ -86,8 +87,8 @@ export default function Locations() {
               <td>{loc.name}</td>
               <td>{loc.address || '-'}</td>
               <td>
-                <button className="btn btn-sm" onClick={() => handleEdit(loc)}>Edit</button>
-                <button className="btn btn-sm btn-danger" onClick={() => handleDelete(loc.id)}>Delete</button>
+                <button className="btn btn-sm" onClick={() => handleEdit(loc)}><Pencil size={14} /> Edit</button>
+                <button className="btn btn-sm btn-danger" onClick={() => handleDelete(loc.id)}><Trash2 size={14} /> Delete</button>
               </td>
             </tr>
           ))}

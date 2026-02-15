@@ -11,18 +11,37 @@ public class DataStore {
     private final List<Product> products = Collections.synchronizedList(new ArrayList<>());
     private final List<StockLevel> stockLevels = Collections.synchronizedList(new ArrayList<>());
     private final List<AlertThreshold> thresholds = Collections.synchronizedList(new ArrayList<>());
+    private final List<Category> categories = Collections.synchronizedList(new ArrayList<>());
 
     private final AtomicLong locationSeq = new AtomicLong(0);
     private final AtomicLong productSeq = new AtomicLong(0);
     private final AtomicLong stockLevelSeq = new AtomicLong(0);
     private final AtomicLong thresholdSeq = new AtomicLong(0);
+    private final AtomicLong categorySeq = new AtomicLong(0);
 
     public void loadOrInitialize() {
+        // Seed categories
+        Category toys = addCategory("Toys", Arrays.asList(
+                new AttributeDefinition("Age Range", "dropdown", Arrays.asList("0-3", "3-6", "6-12", "12+")),
+                new AttributeDefinition("Material", "text", null)
+        ));
+        Category artSupplies = addCategory("Art Supplies", Arrays.asList(
+                new AttributeDefinition("Colour Count", "number", null),
+                new AttributeDefinition("Medium", "dropdown", Arrays.asList("Pencil", "Paint", "Marker", "Crayon"))
+        ));
+
         Location warehouse = addLocation("Main Warehouse", "1 Industrial Park, London");
         Location shopfront = addLocation("High Street Store", "42 High Street, London");
 
-        Product widget = addProduct("Widget A", "WGT-001", "Standard widget");
-        Product gadget = addProduct("Gadget B", "GDG-002", "Premium gadget");
+        Map<String, String> widgetAttrs = new LinkedHashMap<>();
+        widgetAttrs.put("Age Range", "3-6");
+        widgetAttrs.put("Material", "Plastic");
+        Product widget = addProduct("Widget A", "WGT-001", "Standard widget", toys.getId(), widgetAttrs);
+
+        Map<String, String> gadgetAttrs = new LinkedHashMap<>();
+        gadgetAttrs.put("Colour Count", "12");
+        gadgetAttrs.put("Medium", "Pencil");
+        Product gadget = addProduct("Gadget B", "GDG-002", "Premium gadget", artSupplies.getId(), gadgetAttrs);
 
         addOrUpdateStockLevel(widget.getId(), warehouse.getId(), 150);
         addOrUpdateStockLevel(widget.getId(), shopfront.getId(), 30);
@@ -57,6 +76,8 @@ public class DataStore {
     }
 
     public boolean deleteLocation(long id) {
+        stockLevels.removeIf(s -> s.getLocationId() == id);
+        thresholds.removeIf(t -> t.getLocationId() == id);
         return locations.removeIf(l -> l.getId() == id);
     }
 
@@ -68,24 +89,63 @@ public class DataStore {
         return products.stream().filter(p -> p.getId() == id).findFirst().orElse(null);
     }
 
-    public Product addProduct(String name, String sku, String description) {
+    public Product addProduct(String name, String sku, String description, Long categoryId, Map<String, String> attributeValues) {
         Product p = new Product(productSeq.incrementAndGet(), name, sku, description);
+        p.setCategoryId(categoryId);
+        p.setAttributeValues(attributeValues);
         products.add(p);
         return p;
     }
 
-    public Product updateProduct(long id, String name, String sku, String description) {
+    public Product updateProduct(long id, String name, String sku, String description, Long categoryId, Map<String, String> attributeValues) {
         Product p = getProduct(id);
         if (p == null) return null;
         p.setName(name);
         p.setSku(sku);
         p.setDescription(description);
+        p.setCategoryId(categoryId);
+        p.setAttributeValues(attributeValues);
         p.touch();
         return p;
     }
 
     public boolean deleteProduct(long id) {
+        stockLevels.removeIf(s -> s.getProductId() == id);
+        thresholds.removeIf(t -> t.getProductId() == id);
         return products.removeIf(p -> p.getId() == id);
+    }
+
+    // ── Categories ──
+
+    public List<Category> getAllCategories() { return new ArrayList<>(categories); }
+
+    public Category getCategory(long id) {
+        return categories.stream().filter(c -> c.getId() == id).findFirst().orElse(null);
+    }
+
+    public Category addCategory(String name, List<AttributeDefinition> attributes) {
+        Category c = new Category(categorySeq.incrementAndGet(), name, attributes);
+        categories.add(c);
+        return c;
+    }
+
+    public Category updateCategory(long id, String name, List<AttributeDefinition> attributes) {
+        Category c = getCategory(id);
+        if (c == null) return null;
+        c.setName(name);
+        c.setAttributes(attributes);
+        c.touch();
+        return c;
+    }
+
+    public boolean deleteCategory(long id) {
+        for (Product p : products) {
+            if (p.getCategoryId() != null && p.getCategoryId() == id) {
+                p.setCategoryId(null);
+                p.setAttributeValues(null);
+            }
+        }
+        return categories.removeIf(c -> c.getId() == id);
     }
 
     // ── Stock Levels ──

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { stockApi } from '../api/client';
 
 export default function Alerts() {
@@ -19,7 +20,10 @@ export default function Alerts() {
       <h1>Low Stock Alerts</h1>
 
       {alerts.length === 0 ? (
-        <p className="empty-state">No low stock alerts. All items are above their thresholds.</p>
+        <div className="empty-state">
+          <CheckCircle2 size={48} className="empty-state-icon" />
+          <p>No low stock alerts. All items are above their thresholds.</p>
+        </div>
       ) : (
         <table className="data-table">
           <thead>

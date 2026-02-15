@@ -2,25 +2,23 @@ package com.stockcheck.model;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-public class Product {
+public class Category {
     private long id;
     private String name;
-    private String sku;
-    private String description;
-    private Long categoryId;
-    private Map<String, String> attributeValues;
+    private List<AttributeDefinition> attributes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public Product() {}
+    public Category() {}
 
-    public Product(long id, String name, String sku, String description) {
+    public Category(long id, String name, List<AttributeDefinition> attributes) {
         this.id = id;
         this.name = name;
-        this.sku = sku;
-        this.description = description;
+        this.attributes = attributes;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -31,17 +29,8 @@ public class Product {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public String getSku() { return sku; }
-    public void setSku(String sku) { this.sku = sku; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    public Long getCategoryId() { return categoryId; }
-    public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
-
-    public Map<String, String> getAttributeValues() { return attributeValues; }
-    public void setAttributeValues(Map<String, String> attributeValues) { this.attributeValues = attributeValues; }
+    public List<AttributeDefinition> getAttributes() { return attributes; }
+    public void setAttributes(List<AttributeDefinition> attributes) { this.attributes = attributes; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
@@ -55,14 +44,9 @@ public class Product {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", id);
         m.put("name", name);
-        m.put("sku", sku);
-        m.put("description", description);
-        m.put("categoryId", categoryId);
-        Map<String, Object> attrMap = new LinkedHashMap<>();
-        if (attributeValues != null) {
-            attrMap.putAll(attributeValues);
-        }
-        m.put("attributeValues", attrMap);
+        m.put("attributes", attributes != null
+                ? attributes.stream().map(AttributeDefinition::toMap).collect(Collectors.toList())
+                : null);
         m.put("createdAt", createdAt != null ? createdAt.toString() : null);
         m.put("updatedAt", updatedAt != null ? updatedAt.toString() : null);
         return m;

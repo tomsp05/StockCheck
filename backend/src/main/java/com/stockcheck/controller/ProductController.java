@@ -8,6 +8,7 @@ import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
 public class ProductController {
@@ -20,6 +21,19 @@ public class ProductController {
 
     public void register(HttpServer server) {
         server.createContext("/api/products", this::handle);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, String> extractAttributeValues(Map<String, Object> body) {
+        Object raw = body.get("attributeValues");
+        if (raw instanceof Map) {
+            Map<String, String> result = new LinkedHashMap<>();
+            for (Map.Entry<String, Object> e : ((Map<String, Object>) raw).entrySet()) {
+                result.put(e.getKey(), e.getValue() != null ? e.getValue().toString() : null);
+            }
+            return result;
+        }
+        return null;
     }
 
     private void handle(HttpExchange exchange) throws IOException {
@@ -44,17 +58,25 @@ public class ProductController {
                 HttpHelper.sendJson(exchange, 200, Json.toJson(p.toMap()));
             } else if ("POST".equals(method)) {
                 Map<String, Object> body = Json.parseObject(HttpHelper.readBody(exchange));
+                Long categoryId = Json.getLong(body, "categoryId");
+                Map<String, String> attributeValues = extractAttributeValues(body);
                 Product p = dataStore.addProduct(
                         Json.getString(body, "name"),
                         Json.getString(body, "sku"),
-                        Json.getString(body, "description"));
+                        Json.getString(body, "description"),
+                        categoryId,
+                        attributeValues);
                 HttpHelper.sendJson(exchange, 201, Json.toJson(p.toMap()));
             } else if ("PUT".equals(method) && id != null) {
                 Map<String, Object> body = Json.parseObject(HttpHelper.readBody(exchange));
+                Long categoryId = Json.getLong(body, "categoryId");
+                Map<String, String> attributeValues = extractAttributeValues(body);
                 Product p = dataStore.updateProduct(id,
                         Json.getString(body, "name"),
                         Json.getString(body, "sku"),
-                        Json.getString(body, "description"));
+                        Json.getString(body, "description"),
+                        categoryId,
+                        attributeValues);
                 if (p == null) { HttpHelper.sendError(exchange, 404, "Product not found"); return; }
                 HttpHelper.sendJson(exchange, 200, Json.toJson(p.toMap()));
             } else if ("DELETE".equals(method) && id != null) {
