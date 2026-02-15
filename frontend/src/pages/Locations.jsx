@@ -1,26 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus, X, Pencil, Trash2 } from 'lucide-react';
 import { locationApi } from '../api/client';
+import { useLocations } from '../hooks';
 
 export default function Locations() {
-  const [locations, setLocations] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { locations, loading, mutate } = useLocations();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', address: '' });
   const [editingId, setEditingId] = useState(null);
-
-  const fetchLocations = async () => {
-    try {
-      const res = await locationApi.getAll();
-      setLocations(res.data);
-    } catch (err) {
-      console.error('Failed to load locations', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchLocations(); }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +20,7 @@ export default function Locations() {
     setForm({ name: '', address: '' });
     setEditingId(null);
     setShowForm(false);
-    fetchLocations();
+    mutate();
   };
 
   const handleEdit = (location) => {
@@ -44,7 +32,7 @@ export default function Locations() {
   const handleDelete = async (id) => {
     if (window.confirm('Delete this location?')) {
       await locationApi.delete(id);
-      fetchLocations();
+      mutate();
     }
   };
 
@@ -84,7 +72,11 @@ export default function Locations() {
         <tbody>
           {locations.map((loc) => (
             <tr key={loc.id}>
-              <td>{loc.name}</td>
+              <td>
+                <Link to={`/locations/${loc.id}`} className="text-blue-600 hover:underline">
+                  {loc.name}
+                </Link>
+              </td>
               <td>{loc.address || '-'}</td>
               <td className="actions-cell">
                 <div className="btn-group">

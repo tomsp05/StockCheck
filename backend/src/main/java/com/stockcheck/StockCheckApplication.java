@@ -2,16 +2,21 @@ package com.stockcheck;
 
 import com.stockcheck.controller.*;
 import com.stockcheck.repository.DataStore;
+import com.stockcheck.repository.DatabaseManager; // Added import
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
+import java.sql.SQLException; // Added import
 
 public class StockCheckApplication {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception, SQLException { // Added SQLException
         int port = 8080;
         if (args.length > 0) {
             port = Integer.parseInt(args[0]);
         }
+
+        DatabaseManager dbManager = new DatabaseManager(); // Instantiated DatabaseManager
+        dbManager.initializeSchema(); // Initialized schema
 
         DataStore dataStore = new DataStore();
         dataStore.loadOrInitialize();

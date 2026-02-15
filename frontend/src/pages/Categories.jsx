@@ -1,28 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Plus, X, Pencil, Trash2 } from 'lucide-react';
 import { categoryApi } from '../api/client';
+import { useCategories } from '../hooks';
 
 const emptyAttribute = () => ({ name: '', type: 'text', options: '' });
 
 export default function Categories() {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { categories, loading, mutate } = useCategories();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', attributes: [emptyAttribute()] });
   const [editingId, setEditingId] = useState(null);
-
-  const fetchCategories = async () => {
-    try {
-      const res = await categoryApi.getAll();
-      setCategories(res.data);
-    } catch (err) {
-      console.error('Failed to load categories', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchCategories(); }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,7 +29,7 @@ export default function Categories() {
     setForm({ name: '', attributes: [emptyAttribute()] });
     setEditingId(null);
     setShowForm(false);
-    fetchCategories();
+    mutate();
   };
 
   const handleEdit = (cat) => {
@@ -61,7 +48,7 @@ export default function Categories() {
   const handleDelete = async (id) => {
     if (window.confirm('Delete this category?')) {
       await categoryApi.delete(id);
-      fetchCategories();
+      mutate();
     }
   };
 

@@ -168,7 +168,18 @@ export const handlers = [
   }),
 
   // Stock Levels
-  http.get('/api/stock', () => HttpResponse.json(stockLevels)),
+  http.get('/api/stock', () => {
+    const enrichedStockLevels = stockLevels.map(sl => {
+      const product = products.find(p => p.id === sl.productId);
+      const location = locations.find(l => l.id === sl.locationId);
+      return {
+        ...sl,
+        product,
+        location,
+      };
+    });
+    return HttpResponse.json(enrichedStockLevels);
+  }),
   http.get('/api/stock/location/:id', ({ params }) => {
     return HttpResponse.json(stockLevels.filter((s) => s.locationId === Number(params.id)));
   }),
@@ -180,9 +191,25 @@ export const handlers = [
     const idx = stockLevels.findIndex((s) => s.productId === body.productId && s.locationId === body.locationId);
     if (idx !== -1) {
       stockLevels[idx] = { ...stockLevels[idx], quantity: body.quantity };
-      return HttpResponse.json(stockLevels[idx]);
+      const enriched = {
+        ...stockLevels[idx],
+        product: products.find(p => p.id === stockLevels[idx].productId),
+        location: locations.find(l => l.id === stockLevels[idx].locationId),
+      }
+      return HttpResponse.json(enriched);
     }
-    return HttpResponse.json({ error: 'Not found' }, { status: 404 });
+    const newStockLevel = {
+      id: stockLevels.length + 1,
+      ...body,
+      updatedAt: '2025-01-01T00:00:00',
+    };
+    stockLevels.push(newStockLevel);
+    const enriched = {
+      ...newStockLevel,
+      product: products.find(p => p.id === newStockLevel.productId),
+      location: locations.find(l => l.id === newStockLevel.locationId),
+    }
+    return HttpResponse.json(enriched);
   }),
 
   // Alerts

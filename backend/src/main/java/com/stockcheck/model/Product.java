@@ -1,5 +1,6 @@
 package com.stockcheck.model;
 
+import java.time.Instant; // Added import
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -11,8 +12,8 @@ public class Product {
     private String description;
     private Long categoryId;
     private Map<String, String> attributeValues;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt; // Changed to Instant
+    private Instant updatedAt; // Changed to Instant
 
     public Product() {}
 
@@ -21,8 +22,7 @@ public class Product {
         this.name = name;
         this.sku = sku;
         this.description = description;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        // createdAt and updatedAt will be set by the database
     }
 
     public long getId() { return id; }
@@ -43,13 +43,13 @@ public class Product {
     public Map<String, String> getAttributeValues() { return attributeValues; }
     public void setAttributeValues(Map<String, String> attributeValues) { this.attributeValues = attributeValues; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 
-    public void touch() { this.updatedAt = LocalDateTime.now(); }
+    // Removed touch() method as updated_at is handled by the database
 
     public Map<String, Object> toMap() {
         Map<String, Object> m = new LinkedHashMap<>();

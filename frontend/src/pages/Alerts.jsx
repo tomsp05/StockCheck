@@ -1,17 +1,8 @@
-import { useEffect, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
-import { stockApi } from '../api/client';
+import { useAlerts } from '../hooks';
 
 export default function Alerts() {
-  const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    stockApi.getAlerts()
-      .then((res) => setAlerts(res.data))
-      .catch((err) => console.error('Failed to load alerts', err))
-      .finally(() => setLoading(false));
-  }, []);
+  const { alerts, loading } = useAlerts();
 
   if (loading) return <p>Loading...</p>;
 

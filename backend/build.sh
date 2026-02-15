@@ -11,7 +11,7 @@ mkdir -p "$OUT_DIR"
 
 echo "Compiling..."
 find "$SRC_DIR" -name "*.java" > /tmp/stockcheck-sources.txt
-javac -d "$OUT_DIR" @/tmp/stockcheck-sources.txt
+javac -d "$OUT_DIR" -cp "$SCRIPT_DIR/lib/*" @/tmp/stockcheck-sources.txt
 
 echo "Build successful. Run with:"
 echo "  java -cp $OUT_DIR com.stockcheck.StockCheckApplication"

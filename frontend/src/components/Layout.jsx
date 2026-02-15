@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Package, Tags, MapPin, Bell, Settings, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Package, Tags, MapPin, ArrowRightLeft, Bell, Settings, Sparkles } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/products', label: 'Products', icon: Package },
   { to: '/categories', label: 'Categories', icon: Tags },
   { to: '/locations', label: 'Locations', icon: MapPin },
+  { to: '/stock-levels', label: 'Stock Levels', icon: ArrowRightLeft },
   { to: '/alerts', label: 'Alerts', icon: Bell },
   { to: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -27,7 +28,7 @@ export default function Layout() {
                   <NavLink
                     to={item.to}
                     end={item.to === '/'}
-                    className={({ isActive }) => isActive ? 'active' : ''}
+                    className={({ isActive }) => (isActive ? 'active' : '')}
                   >
                     <Icon size={15} />
                     {item.label}

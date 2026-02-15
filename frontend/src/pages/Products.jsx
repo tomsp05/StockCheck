@@ -1,28 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Plus, X, Pencil, Trash2 } from 'lucide-react';
-import { productApi, categoryApi } from '../api/client';
+import { productApi } from '../api/client';
+import { useProducts, useCategories } from '../hooks';
 
 export default function Products() {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { products, loading: productsLoading, mutate: mutateProducts } = useProducts();
+  const { categories, loading: categoriesLoading } = useCategories();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', sku: '', description: '', categoryId: '', attributeValues: {} });
   const [editingId, setEditingId] = useState(null);
 
-  const fetchData = async () => {
-    try {
-      const [prodRes, catRes] = await Promise.all([productApi.getAll(), categoryApi.getAll()]);
-      setProducts(prodRes.data);
-      setCategories(catRes.data);
-    } catch (err) {
-      console.error('Failed to load data', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchData(); }, []);
+  const loading = productsLoading || categoriesLoading;
 
   const selectedCategory = categories.find((c) => c.id === Number(form.categoryId));
 
@@ -43,7 +31,7 @@ export default function Products() {
     setForm({ name: '', sku: '', description: '', categoryId: '', attributeValues: {} });
     setEditingId(null);
     setShowForm(false);
-    fetchData();
+    mutateProducts();
   };
 
   const handleEdit = (product) => {
@@ -61,7 +49,7 @@ export default function Products() {
   const handleDelete = async (id) => {
     if (window.confirm('Delete this product?')) {
       await productApi.delete(id);
-      fetchData();
+      mutateProducts();
     }
   };
 
