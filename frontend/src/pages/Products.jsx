@@ -1,49 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Plus, X, Pencil, Trash2 } from 'lucide-react';
-import { productApi, categoryApi } from '../api/client';
+import { productApi } from '../api/client';
+import { useProducts, useCategories } from '../hooks';
 
 export default function Products() {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { products, loading: productsLoading, mutate: mutateProducts } = useProducts();
+  const { categories, loading: categoriesLoading } = useCategories();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', sku: '', description: '', categoryId: '', attributeValues: {} });
   const [editingId, setEditingId] = useState(null);
+  const [error, setError] = useState(null);
 
-  const fetchData = async () => {
-    try {
-      const [prodRes, catRes] = await Promise.all([productApi.getAll(), categoryApi.getAll()]);
-      setProducts(prodRes.data);
-      setCategories(catRes.data);
-    } catch (err) {
-      console.error('Failed to load data', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchData(); }, []);
+  const loading = productsLoading || categoriesLoading;
 
   const selectedCategory = categories.find((c) => c.id === Number(form.categoryId));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = {
-      name: form.name,
-      sku: form.sku,
-      description: form.description,
-      categoryId: form.categoryId ? Number(form.categoryId) : null,
-      attributeValues: form.categoryId ? form.attributeValues : {},
-    };
-    if (editingId) {
-      await productApi.update(editingId, payload);
-    } else {
-      await productApi.create(payload);
+    setError(null);
+    try {
+      const payload = {
+        name: form.name,
+        sku: form.sku,
+        description: form.description,
+        categoryId: form.categoryId ? Number(form.categoryId) : null,
+        attributeValues: form.categoryId ? form.attributeValues : {},
+      };
+      if (editingId) {
+        await productApi.update(editingId, payload);
+      } else {
+        await productApi.create(payload);
+      }
+      setForm({ name: '', sku: '', description: '', categoryId: '', attributeValues: {} });
+      setEditingId(null);
+      setShowForm(false);
+      mutateProducts();
+    } catch (err) {
+      console.error('Failed to save product', err);
+      setError(err.response?.data?.error || err.message || 'Failed to save product');
     }
-    setForm({ name: '', sku: '', description: '', categoryId: '', attributeValues: {} });
-    setEditingId(null);
-    setShowForm(false);
-    fetchData();
   };
 
   const handleEdit = (product) => {
@@ -61,7 +56,7 @@ export default function Products() {
   const handleDelete = async (id) => {
     if (window.confirm('Delete this product?')) {
       await productApi.delete(id);
-      fetchData();
+      mutateProducts();
     }
   };
 
@@ -88,6 +83,8 @@ export default function Products() {
           {showForm ? <><X size={16} /> Cancel</> : <><Plus size={16} /> Add Product</>}
         </button>
       </div>
+
+      {error && <div className="error-banner">{error}</div>}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="form-card">

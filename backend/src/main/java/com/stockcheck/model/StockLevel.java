@@ -41,6 +41,8 @@ public class StockLevel {
     public Map<String, Object> toMap(Product product, Location location) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", id);
+        m.put("productId", productId);
+        m.put("locationId", locationId);
         m.put("product", product != null ? product.toMap() : null);
         m.put("location", location != null ? location.toMap() : null);
         m.put("quantity", quantity);

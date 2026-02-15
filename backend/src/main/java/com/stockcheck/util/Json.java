@@ -74,6 +74,13 @@ public class Json {
     }
 
     @SuppressWarnings("unchecked")
+    public static List<Object> parseArray(String json) {
+        json = json.trim();
+        if (!json.startsWith("[")) throw new IllegalArgumentException("Expected JSON array");
+        return (List<Object>) parseValue(new int[]{0}, json);
+    }
+
+    @SuppressWarnings("unchecked")
     private static Object parseValue(int[] pos, String json) {
         skipWhitespace(pos, json);
         char c = json.charAt(pos[0]);

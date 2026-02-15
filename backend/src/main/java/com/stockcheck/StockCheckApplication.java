@@ -2,15 +2,35 @@ package com.stockcheck;
 
 import com.stockcheck.controller.*;
 import com.stockcheck.repository.DataStore;
+import com.stockcheck.repository.DatabaseManager; // Added import
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
+import java.sql.SQLException; // Added import
 
 public class StockCheckApplication {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception, SQLException { // Added SQLException
         int port = 8080;
         if (args.length > 0) {
             port = Integer.parseInt(args[0]);
+        }
+
+        DatabaseManager dbManager = new DatabaseManager();
+
+        // Retry connecting to the database (allows time for Docker PostgreSQL to start)
+        int maxRetries = 10;
+        for (int i = 1; i <= maxRetries; i++) {
+            try {
+                dbManager.initializeSchema();
+                break;
+            } catch (Exception e) {
+                if (i == maxRetries) {
+                    System.err.println("Failed to connect to database after " + maxRetries + " attempts.");
+                    throw e;
+                }
+                System.out.println("Database not ready, retrying in 2s... (" + i + "/" + maxRetries + ")");
+                Thread.sleep(2000);
+            }
         }
 
         DataStore dataStore = new DataStore();
