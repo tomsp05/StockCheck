@@ -3,11 +3,14 @@ FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
 # Copy the entire backend source code into the container first
-# This includes lib/postgresql-42.7.3.jar already in the repo
 COPY . .
 
-# Compile the Java source code
-RUN chmod +x build.sh && ./build.sh
+# Download the PostgreSQL JDBC driver (*.jar is gitignored so it's not in the repo)
+# then compile the Java source code
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* && \
+    mkdir -p lib && \
+    curl -L -o lib/postgresql-42.7.3.jar https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar && \
+    chmod +x build.sh && ./build.sh
 
 # Expose the default port (Render overrides via PORT env var)
 EXPOSE 8080
