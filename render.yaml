@@ -14,9 +14,7 @@ services:
     # Use Render's free instance type
     plan: free
     # Health Check to ensure the service is responsive before it's considered "healthy"
-    healthCheck:
-      path: /api/categories
-      initialDelaySeconds: 120
+    healthCheckPath: /api/categories
     # Define the environment variables the backend needs
     envVars:
       - key: JDBC_DATABASE_URL
