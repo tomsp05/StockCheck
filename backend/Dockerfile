@@ -3,21 +3,14 @@ FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
 # Copy the entire backend source code into the container first
+# This includes lib/postgresql-42.7.3.jar already in the repo
 COPY . .
 
-# Now, execute all build steps in a single RUN command for efficiency and robustness
-RUN set -e && \
-    # 1. Ensure the lib directory exists and add the PostgreSQL JDBC driver
-    mkdir -p lib && \
-    curl -L -o lib/postgresql.jar https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar && \
-    # 2. Make the build script executable
-    chmod +x build.sh && \
-    # 3. Run the build script to compile the code
-    ./build.sh
+# Compile the Java source code
+RUN chmod +x build.sh && ./build.sh
 
-# Expose the port the application runs on
+# Expose the default port (Render overrides via PORT env var)
 EXPOSE 8080
 
-# Command to run the application. The classpath includes the compiled code in 'out'
-# and all .jar files in 'lib', including the H2 driver we downloaded.
-CMD ["java", "-cp", "out:lib/*", "com.stockcheck.StockCheckApplication"]
+# Use shell form so the glob (lib/*) expands and $PORT is substituted
+CMD java -cp "out:lib/*" com.stockcheck.StockCheckApplication ${PORT:-8080}

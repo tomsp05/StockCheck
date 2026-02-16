@@ -1,5 +1,5 @@
 server {
-    listen 80;
+    listen ${PORT};
 
     # Use a public DNS resolver instead of Docker-only 127.0.0.11
     resolver 8.8.8.8 valid=30s;

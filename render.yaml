@@ -16,7 +16,6 @@ services:
     # Health Check to ensure the service is responsive before it's considered "healthy"
     healthCheck:
       path: /api/categories
-      port: 8080
       initialDelaySeconds: 30
     # Define the environment variables the backend needs
     envVars:

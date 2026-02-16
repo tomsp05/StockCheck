@@ -19,6 +19,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      PORT: 8080
       JDBC_DATABASE_URL: jdbc:postgresql://db:5432/stockcheck
       JDBC_DATABASE_USER: stockcheck
       JDBC_DATABASE_PASSWORD: stockcheck
@@ -32,6 +33,7 @@ services:
     ports:
       - "3000:80"
     environment:
+      PORT: 80
       BACKEND_URL: http://backend:8080
     depends_on:
       - backend

@@ -12,7 +12,7 @@ FROM nginx:stable-alpine
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 # Copy the built React application from the build stage
 COPY --from=build /app/dist /usr/share/nginx/html
-# Expose the port Nginx will listen on
-EXPOSE 80
+# Render sets PORT env var (default 10000); nginx template uses ${PORT}
+EXPOSE 10000
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
