@@ -20,7 +20,7 @@ services:
       - key: JDBC_DATABASE_URL
         fromDatabase:
           name: stockcheck-db
-          property: connectionURI
+          property: connectionString
       - key: JDBC_DATABASE_USER
         fromDatabase:
           name: stockcheck-db
@@ -44,7 +44,7 @@ services:
         fromService:
           name: stockcheck-backend
           type: web
-          property: url
+          property: hostport
 
 databases:
   - name: stockcheck-db

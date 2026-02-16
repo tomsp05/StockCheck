@@ -12,7 +12,7 @@ server {
 
     location /api {
         # Use a variable so nginx resolves the hostname at request time, not startup
-        set $backend "${BACKEND_URL}";
+        set $backend "http://${BACKEND_URL}";
         proxy_pass $backend;
 
         proxy_set_header Host $host;
