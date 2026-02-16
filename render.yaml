@@ -38,13 +38,10 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     envVars:
-      # This is the crucial variable for our Nginx template.
-      # It points to the internal address Render creates for the backend service.
+      # Full public URL of the backend service for nginx to proxy API requests to.
+      # Render has no "url" property, so we hardcode based on the known service name.
       - key: BACKEND_URL
-        fromService:
-          name: stockcheck-backend
-          type: web
-          property: hostport
+        value: https://stockcheck-backend.onrender.com
 
 databases:
   - name: stockcheck-db
