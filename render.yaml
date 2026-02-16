@@ -16,7 +16,7 @@ services:
     # Health Check to ensure the service is responsive before it's considered "healthy"
     healthCheck:
       path: /api/categories
-      initialDelaySeconds: 30
+      initialDelaySeconds: 120
     # Define the environment variables the backend needs
     envVars:
       - key: JDBC_DATABASE_URL

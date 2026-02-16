@@ -17,8 +17,8 @@ public class StockCheckApplication {
 
         DatabaseManager dbManager = new DatabaseManager();
 
-        // Retry connecting to the database (allows time for Docker PostgreSQL to start)
-        int maxRetries = 10;
+        // Retry connecting to the database (allows time for Render PostgreSQL to be reachable)
+        int maxRetries = 30;
         for (int i = 1; i <= maxRetries; i++) {
             try {
                 dbManager.initializeSchema();
@@ -28,8 +28,8 @@ public class StockCheckApplication {
                     System.err.println("Failed to connect to database after " + maxRetries + " attempts.");
                     throw e;
                 }
-                System.out.println("Database not ready, retrying in 2s... (" + i + "/" + maxRetries + ")");
-                Thread.sleep(2000);
+                System.out.println("Database not ready, retrying in 3s... (" + i + "/" + maxRetries + ")");
+                Thread.sleep(3000);
             }
         }
 
