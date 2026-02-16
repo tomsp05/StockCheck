@@ -1,5 +1,6 @@
 package com.stockcheck.repository;
 
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -7,24 +8,50 @@ import java.sql.Statement;
 
 public class DatabaseManager {
 
-    private static final String DB_URL = convertDbUrl(System.getenv("JDBC_DATABASE_URL"));
-    private static final String DB_USER = System.getenv("JDBC_DATABASE_USER");
-    private static final String DB_PASSWORD = System.getenv("JDBC_DATABASE_PASSWORD");
+    private static final String[] DB_CONFIG = parseDbConfig();
+    private static final String DB_URL = DB_CONFIG[0];
+    private static final String DB_USER = DB_CONFIG[1];
+    private static final String DB_PASSWORD = DB_CONFIG[2];
 
-    // Render provides postgres:// URLs but JDBC requires jdbc:postgresql://
-    // Also ensures sslmode=require is set for Render's hosted PostgreSQL
-    private static String convertDbUrl(String url) {
-        if (url == null) return null;
-        if (url.startsWith("postgres://")) {
-            url = "jdbc:postgresql://" + url.substring("postgres://".length());
-        } else if (url.startsWith("postgresql://")) {
-            url = "jdbc:postgresql://" + url.substring("postgresql://".length());
+    // Render provides postgres://user:pass@host:port/db URLs.
+    // JDBC cannot parse credentials in the URL, so we extract them separately.
+    private static String[] parseDbConfig() {
+        String url = System.getenv("JDBC_DATABASE_URL");
+        String user = System.getenv("JDBC_DATABASE_USER");
+        String password = System.getenv("JDBC_DATABASE_PASSWORD");
+
+        if (url != null && (url.startsWith("postgres://") || url.startsWith("postgresql://"))) {
+            try {
+                // Parse the postgres:// URL to extract components
+                URI uri = new URI(url);
+                String host = uri.getHost();
+                int port = uri.getPort();
+                String dbName = uri.getPath();
+                if (dbName != null && dbName.startsWith("/")) {
+                    dbName = dbName.substring(1);
+                }
+
+                // Extract credentials from the URL if not provided separately
+                String userInfo = uri.getUserInfo();
+                if (userInfo != null) {
+                    String[] parts = userInfo.split(":", 2);
+                    if (user == null) user = parts[0];
+                    if (password == null && parts.length > 1) password = parts[1];
+                }
+
+                // Build a clean JDBC URL (host:port/db only, no credentials)
+                String jdbcUrl = "jdbc:postgresql://" + host;
+                if (port > 0) jdbcUrl += ":" + port;
+                jdbcUrl += "/" + dbName + "?sslmode=require";
+
+                return new String[]{jdbcUrl, user, password};
+            } catch (Exception e) {
+                System.err.println("Failed to parse database URL: " + e.getMessage());
+            }
         }
-        // Render PostgreSQL requires SSL
-        if (url.startsWith("jdbc:postgresql://") && !url.contains("sslmode=")) {
-            url += url.contains("?") ? "&sslmode=require" : "?sslmode=require";
-        }
-        return url;
+
+        // Already a JDBC URL or local development
+        return new String[]{url, user, password};
     }
 
     public DatabaseManager() {
