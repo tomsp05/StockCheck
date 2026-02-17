@@ -32,6 +32,11 @@ public class LocationController {
                 return;
             }
 
+            // Body buffering must be set up before reading the body
+            if ("POST".equals(method) || "PUT".equals(method)) {
+                exchange.setStreams(null, null);
+            }
+
             Long id = HttpHelper.pathId(path, "/api/locations");
 
             if ("GET".equals(method) && id == null) {
